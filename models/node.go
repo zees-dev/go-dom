@@ -46,7 +46,7 @@ type Item = Node
 func (node *Node) GetElementByID(id string) (*Node, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	nodeCh := make(chan *Node, 1)
+	nodeCh := make(chan *Node)
 
 	var getNodeByID func(*Node, *sync.WaitGroup)
 	getNodeByID = func(n *Node, wg *sync.WaitGroup) {
@@ -64,12 +64,11 @@ func (node *Node) GetElementByID(id string) (*Node, error) {
 
 	go func(wg *sync.WaitGroup) {
 		wg.Wait()
-		nodeCh <- &Node{}
+		close(nodeCh)
 	}(&wg)
 
-	nodeWithID := <-nodeCh
-
-	if nodeWithID.id != id {
+	nodeWithID, found := <-nodeCh
+	if !found {
 		return nil, errors.New("element with id " + id + " not found")
 	}
 
