@@ -1,7 +1,7 @@
 package models
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -15,6 +15,7 @@ type Node struct {
 	children []*Node
 }
 
+// Equals comparison operator for Nodes
 func (node *Node) Equals(other *Node) bool {
 	primitivesMatch := node.tag == other.tag &&
 		node.id == other.id &&
@@ -39,10 +40,22 @@ func (node *Node) Equals(other *Node) bool {
 	return true
 }
 
-// Go doesn't yet support generics hence we pre-declare stack/queue type here
+func (node *Node) String() string {
+	return fmt.Sprintf("{ id: %s, tag: %s, src: %s, alt: %s, text: %s, class: %s, children: %q }",
+		node.id,
+		node.tag,
+		node.src,
+		node.alt,
+		node.text,
+		node.class,
+		node.children,
+	)
+}
+
+// Item - Go doesn't yet support generics hence we pre-declare stack/queue type here
 type Item = Node
 
-// GetElementById is optimised node traversal to find element by specified ID using of go-routines and context
+// GetElementByID is optimised node traversal to find element by specified ID using of go-routines and context
 func (node *Node) GetElementByID(id string) (*Node, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -69,7 +82,7 @@ func (node *Node) GetElementByID(id string) (*Node, error) {
 
 	nodeWithID, found := <-nodeCh
 	if !found {
-		return nil, errors.New("element with id " + id + " not found")
+		return nil, fmt.Errorf("element with id %s not found", id)
 	}
 
 	// Use context to cancel lookup once a single goroutine has found node by ID
@@ -77,32 +90,45 @@ func (node *Node) GetElementByID(id string) (*Node, error) {
 	return nodeWithID, nil
 }
 
-// GetElementByIdBFS is Breadth first search implementation of node traversal to retrieve node by ID
-func (node *Node) GetElementByIDBFS(id string) *Node {
+// GetElementByIDBFS is Breadth first search implementation of node traversal to retrieve node by ID
+func (node *Node) GetElementByIDBFS(id string) (*Node, error) {
 	queue := NewQueue()
 	queue.EnQueue(*node)
 	for !queue.IsEmpty() {
 		currentNode, err := queue.DeQueue()
 		if err != nil {
-			return nil
+			break
 		}
 		if currentNode.id == id {
-			return &currentNode
+			return &currentNode, nil
 		}
 		for _, v := range currentNode.children {
 			queue.EnQueue(*v)
 		}
 	}
-	// TODO - use Queue data structure
-	return nil
+	return nil, fmt.Errorf("element with id %s not found", id)
 }
 
-// GetElementByIdDFS is Depth first search implementation of node traversal to retrieve node by ID
-func (node *Node) GetElementByIDDFS(id string) *Node {
-	// TODO - use Stack data structure
-	return node
+// GetElementByIDDFS is Depth first search implementation of node traversal to retrieve node by ID
+func (node *Node) GetElementByIDDFS(id string) (*Node, error) {
+	stack := NewStack()
+	stack.Push(*node)
+	for !stack.IsEmpty() {
+		currentNode, err := stack.Pop()
+		if err != nil {
+			break
+		}
+		if currentNode.id == id {
+			return &currentNode, nil
+		}
+		for _, v := range currentNode.children {
+			stack.Push(*v)
+		}
+	}
+	return nil, fmt.Errorf("element with id %s not found", id)
 }
 
+// GetExampleDom returns a mock/example DOM
 func GetExampleDom() *Node {
 	image := Node{
 		tag: "img",
@@ -119,7 +145,7 @@ func GetExampleDom() *Node {
 	span := Node{
 		tag:  "span",
 		id:   "copyright",
-		text: "2019 &copy; Ilija Eftimov",
+		text: "2019 ; Zees-Dev",
 	}
 
 	div := Node{
