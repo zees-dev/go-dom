@@ -55,8 +55,8 @@ func (node *Node) String() string {
 // Item - Go doesn't yet support generics hence we pre-declare stack/queue type here
 type Item = Node
 
-// GetElementByID is optimised node traversal to find element by specified ID using of go-routines and context
-func (node *Node) GetElementByID(id string) (*Node, error) {
+// GetElementByIDViaWaitGroup is optimised node traversal to find element by specified ID using waitgroups as synchroniser
+func (node *Node) GetElementByIDViaWaitGroup(id string) (*Node, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	nodeCh := make(chan *Node)
@@ -88,6 +88,50 @@ func (node *Node) GetElementByID(id string) (*Node, error) {
 	// Use context to cancel lookup once a single goroutine has found node by ID
 	// For for - select with context
 	return nodeWithID, nil
+}
+
+// GetElementByIDViaGoRoutines is optimised node traversal to find element by specified ID using of go-routines
+func (node *Node) GetElementByIDViaGoRoutines(id string) (*Node, error) {
+	// First pass through tree to get total no. of nodes - this can be optimized
+	totalNodes := 1
+	var addNodes func(*Node)
+	addNodes = func(node *Node) {
+		totalNodes += len(node.children)
+		for _, c := range node.children {
+			addNodes(c)
+		}
+	}
+	addNodes(node)
+
+	matchedNode := make(chan *Node)
+	nodeCh := make(chan *Node, totalNodes)
+	done := make(chan struct{}, 1)
+
+	nodeCh <- node
+
+	var getNodeByID func()
+	getNodeByID = func() {
+		for len(nodeCh) > 0 {
+			currentNode := <-nodeCh
+			if currentNode.id == id {
+				matchedNode <- currentNode
+			}
+			for _, child := range currentNode.children {
+				nodeCh <- child
+			}
+		}
+		close(done)
+	}
+	go getNodeByID()
+
+	for {
+		select {
+		case <-done:
+			return nil, fmt.Errorf("element with id %s not found", id)
+		case node := <-matchedNode:
+			return node, nil
+		}
+	}
 }
 
 // GetElementByIDBFS is Breadth first search implementation of node traversal to retrieve node by ID

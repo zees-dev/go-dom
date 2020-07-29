@@ -211,9 +211,27 @@ func TestNode(t *testing.T) {
 		}
 	})
 
-	t.Run("GetElementByID - Optimised parallel Search", func(t *testing.T) {
+	t.Run("GetElementByID - Optimised parallel waitgroup based search", func(t *testing.T) {
 		dom := generateExampleDom()
-		got, err := dom.GetElementByID("id-to-find")
+		got, err := dom.GetElementByIDViaWaitGroup("id-to-find")
+		if err != nil {
+			t.Errorf("%s", err)
+		}
+
+		want := &Node{
+			tag:  "h2",
+			text: "This is a H2",
+			id:   "id-to-find",
+		}
+
+		if !got.Equals(want) {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+
+	t.Run("GetElementByID - Optimised parallel go routine based search", func(t *testing.T) {
+		dom := generateExampleDom()
+		got, err := dom.GetElementByIDViaGoRoutines("id-to-find")
 		if err != nil {
 			t.Errorf("%s", err)
 		}

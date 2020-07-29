@@ -142,15 +142,49 @@ func generateExampleDomDFSOptimized() *Node {
 	return &html
 }
 
-func BenchmarkGetElementByID(b *testing.B) {
+func BenchmarkGetElementByIDViaWaitGroup(b *testing.B) {
 	domNormal := generateExampleDom()
 	domBFSOptimized := generateExampleDomBFSOptimized()
 	domDFSOptimized := generateExampleDomDFSOptimized()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		domNormal.GetElementByID("id-to-find")
-		domBFSOptimized.GetElementByID("id-to-find")
-		domDFSOptimized.GetElementByID("id-to-find")
+		_, err := domNormal.GetElementByIDViaWaitGroup("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domBFSOptimized.GetElementByIDViaWaitGroup("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domDFSOptimized.GetElementByIDViaWaitGroup("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func BenchmarkGetElementByIDViaGoRoutines(b *testing.B) {
+	domNormal := generateExampleDom()
+	domBFSOptimized := generateExampleDomBFSOptimized()
+	domDFSOptimized := generateExampleDomDFSOptimized()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := domNormal.GetElementByIDViaGoRoutines("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domBFSOptimized.GetElementByIDViaGoRoutines("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domDFSOptimized.GetElementByIDViaGoRoutines("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
 	}
 }
 
@@ -160,9 +194,20 @@ func BenchmarkBreadthFirstSearch(b *testing.B) {
 	domDFSOptimized := generateExampleDomDFSOptimized()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		domNormal.GetElementByIDBFS("id-to-find")
-		domBFSOptimized.GetElementByIDBFS("id-to-find")
-		domDFSOptimized.GetElementByIDBFS("id-to-find")
+		_, err := domNormal.GetElementByIDBFS("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domBFSOptimized.GetElementByIDBFS("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domDFSOptimized.GetElementByIDBFS("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
 	}
 }
 
@@ -172,8 +217,19 @@ func BenchmarkDepthFirstSearch(b *testing.B) {
 	domDFSOptimized := generateExampleDomDFSOptimized()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		domNormal.GetElementByIDDFS("id-to-find")
-		domBFSOptimized.GetElementByIDDFS("id-to-find")
-		domDFSOptimized.GetElementByIDDFS("id-to-find")
+		_, err := domNormal.GetElementByIDDFS("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domBFSOptimized.GetElementByIDDFS("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
+
+		_, err = domDFSOptimized.GetElementByIDDFS("id-to-find")
+		if err != nil {
+			b.Error(err)
+		}
 	}
 }
